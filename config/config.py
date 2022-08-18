@@ -22,6 +22,7 @@ cfg.trainer = trainer
 
 ## path
 path = edict()
+path.val = '/home/xu.liu/Work/14.onnx/validation'
 path.data_path = "/tmp4/kuanchih/dataset/KITTI/detection/training" # used in visualDet3D/data/.../dataset
 path.test_path = "/tmp4/kuanchih/dataset/KITTI/detection/testing" # used in visualDet3D/data/.../dataset
 path.visualDet3D_path = "./visualDet3D" # The path should point to the inner subfolder
@@ -79,8 +80,8 @@ data = edict(
     batch_size = 12,
     num_workers = 8,
     rgb_shape = (288, 1280, 3),
-    train_dataset = "KittiMonoDataset",
-    val_dataset   = "KittiMonoDataset",
+    train_dataset = "KittiMonoTrainDataset",
+    val_dataset   = "KittiMonoValDataset",
     test_dataset  = "KittiMonoTestDataset",
     train_split_file = os.path.join(cfg.path.visualDet3D_path, 'data', 'kitti', 'chen_split', 'train.txt'),
     val_split_file   = os.path.join(cfg.path.visualDet3D_path, 'data', 'kitti', 'chen_split', 'val.txt'),
