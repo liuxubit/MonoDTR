@@ -9,6 +9,12 @@ import cv2
 def read_pc_from_bin(bin_path):
     """Load PointCloud data from bin file."""
     p = np.fromfile(bin_path, dtype=np.float32).reshape(-1, 4)
+    p = cv2.imread(bin_path, -1)
+    return p
+
+def read_depth_from_bin(bin_path):
+    """Load PointCloud data from bin file."""
+    p = cv2.imread(bin_path, -1)
     return p
 
 def read_image(path):
