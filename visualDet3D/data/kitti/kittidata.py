@@ -7,7 +7,7 @@ import os
 import math
 import numpy as np
 from numpy.linalg import inv
-from .utils import read_image, read_pc_from_bin, _lidar2leftcam, _leftcam2lidar, _leftcam2imgplane
+from .utils import read_image, read_pc_from_bin, _lidar2leftcam, _leftcam2lidar, _leftcam2imgplane, read_depth_from_bin
 # KITTI
 class KittiCalib:
     '''
@@ -35,17 +35,6 @@ class KittiCalib:
         self.data = calib
 
         self.P2 = np.array(self.data['P2']).reshape(3,4)
-        self.P3 = np.array(self.data['P3']).reshape(3,4)
-
-        R0_rect = np.zeros([4, 4])
-        R0_rect[0:3, 0:3] = np.array(self.data['R0_rect']).reshape(3, 3)
-        R0_rect[3, 3] = 1
-        self.R0_rect = R0_rect
-
-        Tr_velo_to_cam = np.zeros([4, 4])
-        Tr_velo_to_cam[0:3, :] = np.array(self.data['Tr_velo_to_cam']).reshape(3, 4)
-        Tr_velo_to_cam[3, 3] = 1
-        self.Tr_velo_to_cam = Tr_velo_to_cam
 
         return self
     
@@ -172,6 +161,7 @@ class KittiObj():
         if s is None:
             return
         if len(s.split()) == 15: # data
+            print(f"len")
             self.truncated, self.occluded, self.alpha,\
             self.bbox_l, self.bbox_t, self.bbox_r, self.bbox_b, \
             self.h, self.w, self.l, self.x, self.y, self.z, self.ry = \
@@ -203,18 +193,14 @@ class KittiData:
     '''
     class storing a frame of KITTI data
     '''
-    def __init__(self, root_dir, idx, output_dict=None):
+    def __init__(self, root_dir, output_dict=None):
         '''
         inputs:
             root_dir(str): kitti dataset dir
             idx(str %6d): data index e.g. "000000"
             output_dict: decide what to output
         '''
-        self.calib_path = os.path.join(root_dir, "calib", idx+'.txt')
-        self.image2_path = os.path.join(root_dir, "image_2", idx+'.png')
-        self.image3_path = os.path.join(root_dir, 'image_3', idx+'.png')
-        self.label2_path = os.path.join(root_dir, "label_2", idx+'.txt')
-        self.velodyne_path = os.path.join(root_dir, "velodyne", idx+'.bin')
+        self.root_dir = root_dir
         self.output_dict = output_dict
         if self.output_dict is None:
             self.output_dict = {
@@ -225,7 +211,7 @@ class KittiData:
                 "velodyne": True
             }
 
-    def read_data(self):
+    def read_data(self, idx):
         '''
         read data
         returns:
@@ -240,13 +226,18 @@ class KittiData:
                 y<----.z
         '''
         
+        print(f"self.root_dir = {self.root_dir}")
+        self.calib_path = os.path.join(self.root_dir, "calib", idx+'.txt')
+        self.image2_path = os.path.join(self.root_dir, "image_2", idx+'.jpg')
+        # self.image3_path = os.path.join(root_dir, 'image_3', idx+'.png')
+        self.label2_path = os.path.join(self.root_dir, "label_2", idx+'.txt')
+        self.detph2_path = os.path.join(self.root_dir, "depth_2", idx+'.jpg')
+
         calib = KittiCalib(self.calib_path).read_calib_file() if self.output_dict["calib"] else None
+        print(f"calib = {calib}")
         image = read_image(self.image2_path) if self.output_dict["image"] else None
         label = KittiLabel(self.label2_path).read_label_file() if self.output_dict["label"] else None
-        pc = read_pc_from_bin(self.velodyne_path) if self.output_dict["velodyne"] else None
-        if 'image_3' in self.output_dict and self.output_dict['image_3']:
-            image_3 = read_image(self.image3_path) if self.output_dict["image_3"] else None
+        depth = read_depth_from_bin(self.detph2_path) if self.output_dict["depth"] else None
 
-            return calib, image, image_3, label, pc
-        else:
-            return calib, image, label, pc
+        return calib, image, label, depth
+
